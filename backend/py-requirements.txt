@@ -1,0 +1,12 @@
+html5rdf==1.2.1
+numpy==2.4.6
+owlrl==7.1.4
+packaging==26.2
+pandas==3.0.3
+prettytable==3.17.0
+pyparsing==3.3.2
+pyshacl==0.31.0
+python-dateutil==2.9.0.post0
+rdflib==7.6.0
+six==1.17.0
+wcwidth==0.8.0

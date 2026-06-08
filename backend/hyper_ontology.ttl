@@ -1,0 +1,74 @@
+@prefix tag: <https://theknowledgecommons.org/ns/tagology/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+
+tag: a owl:Ontology ;
+  rdfs:label "tagology ontology" .
+
+tag:HyperNode
+    a owl:Class ;
+    rdfs:label "hypergraph node" .
+
+tag:HyperEdge
+    a owl:Class ;
+    rdfs:label "hyperedge" .
+
+tag:HyperArc
+    a owl:Class ;
+    rdfs:subClassOf tag:HyperEdge ;
+    rdfs:label "directed hyperedge" .
+
+tag:FArc
+    a owl:Class ;
+    rdfs:subClassOf tag:HyperArc ;
+    rdfs:label "F-hyperarc" .
+
+tag:BArc
+    a owl:Class ;
+    rdfs:subClassOf tag:HyperArc ;
+    rdfs:label "B-hyperarc" .
+
+tag:hasTail
+    a owl:ObjectProperty ;
+    rdfs:domain tag:HyperArc ;
+    rdfs:range tag:HyperNode ;
+    rdfs:label "has tail property" .
+
+tag:hasHead
+    a owl:ObjectProperty ;
+    rdfs:domain tag:HyperArc ;
+    rdfs:range tag:HyperNode ;
+    rdfs:label "has head property" .
+
+tag:hasAArc
+    a owl:Class ;
+    rdfs:subClassOf tag:FArc ;
+    rdfs:label "HAS-A F-Hyperarc" .
+
+tag:isAArc
+    a owl:Class ;
+    rdfs:subClassOf tag:BArc ;
+    rdfs:label "IS-A B-Hyperarc" .
+
+tag:BArcShape a sh:NodeShape ;
+    sh:targetClass tag:BArc ;
+    sh:property [
+        sh:path tag:hasTail ;
+        sh:minCount 1 ] ;
+    sh:property [
+        sh:path tag:hasHead ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ] .
+
+tag:FArcShape a sh:NodeShape ;
+    sh:targetClass tag:FArc ;
+    sh:property [
+        sh:path tag:hasTail ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ] ;
+    sh:property [
+        sh:path tag:hasHead ;
+        sh:minCount 1 ] .
+
