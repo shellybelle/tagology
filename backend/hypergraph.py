@@ -1,22 +1,25 @@
-from rdflib import Graph, Namespace, URIRef
-from rdflib.namespace import RDF
+from rdflib import Graph, Namespace, URIRef, Literal
+from rdflib.namespace import RDF, RDFS
 from pyshacl import validate
-import pandas, re
+import pandas, re, time
 
 HYPER_ONTOLOGY_PATH = "./hyper_ontology.ttl"
 TAG = Namespace("https://theknowledgecommons.org/ns/tagology/")
 DAT = Namespace("https://theknowledgecommons.org/tmp/")
 
 def slug(text: str) -> str:
-    return re.sub(r'[^a-z0-9_]', '', text.strip().lower().replace(' ', '_'))
+    s = str(text).strip().lower()
+    s = re.sub(r'\s+', '_', s)
+    s = re.sub(r'[^a-z0-9_]', '', s)
+    s = re.sub(r'_+', '_', s)
+    return s.strip('_') or "empty"
 
-def load_hyper_ontology(hypergraph: Graph) -> bool:
+def load_hyper_ontology(hypergraph: Graph) -> None:
     hypergraph.parse(HYPER_ONTOLOGY_PATH, format="turtle")
     hypergraph.bind("tag", TAG)
     hypergraph.bind("dat", DAT)
-    return True
 
-def add_isAArc(hypergraph: Graph, tails: list[URIRef], head: URIRef, headLabel: str) -> URIRef:
+def add_isAArc(hypergraph: Graph, tails: list[URIRef], head: URIRef, headLabel: str) -> None:
     arc = TAG[f"isA_{slug(headLabel)}"]
     hypergraph.add((arc, RDF.type, TAG.isAArc))
     
@@ -25,9 +28,7 @@ def add_isAArc(hypergraph: Graph, tails: list[URIRef], head: URIRef, headLabel: 
     for tail in tails:
         hypergraph.add((arc, TAG.hasTail, tail))
 
-    return arc
-
-def add_hasAArc(hypergraph: Graph, tail: URIRef, tailLabel: str, heads: list[URIRef]) -> URIRef:
+def add_hasAArc(hypergraph: Graph, tail: URIRef, tailLabel: str, heads: list[URIRef]) -> None:
     arc = TAG[f"{slug(tailLabel)}_hasA"]
     hypergraph.add((arc, RDF.type, TAG.hasAArc))
     
@@ -36,9 +37,7 @@ def add_hasAArc(hypergraph: Graph, tail: URIRef, tailLabel: str, heads: list[URI
 
     hypergraph.add((arc, TAG.hasTail, tail))
 
-    return arc
-
-def load_from_csv(csv_path: str, csv_class: str, hypergraph: Graph) -> bool:
+def load_from_csv(csv_path: str, csv_class: str, hypergraph: Graph) -> None:
     df = pandas.read_csv(csv_path, dtype=str).fillna("")
 
     obj_class = slug(csv_class)
@@ -46,6 +45,7 @@ def load_from_csv(csv_path: str, csv_class: str, hypergraph: Graph) -> bool:
 
     # [CSV object class] is a hypergraph node
     hypergraph.add((obj_class_uri, RDF.type, TAG.HyperNode))
+    hypergraph.add((obj_class_uri, RDFS.label, Literal(csv_class)))
 
     prop_uris = []
     for col in df.columns:
@@ -55,18 +55,20 @@ def load_from_csv(csv_path: str, csv_class: str, hypergraph: Graph) -> bool:
 
         # [properties(columns)] are hypergraph nodes
         hypergraph.add((prop_uri, RDF.type, TAG.HyperNode))
+        hypergraph.add((prop_uri, RDFS.label, Literal(col)))
 
-        tag_uris = set()
-        for _, row in df.iterrows():
-            val = slug(row[col])
-            tag_uri = DAT[f"{prop}--{val}"]
-            tag_uris.add(tag_uri)
+        tag_uris = []
+        for cell in df[col].unique():
+            val = slug(cell)
+            tag_uri = DAT[f"tag/{prop}/{val}"]
+            tag_uris.append(tag_uri)
 
             # [tags = property(column):value pairs] are hypergraph nodes
             hypergraph.add((tag_uri, RDF.type, TAG.HyperNode))
+            hypergraph.add((tag_uri, RDFS.label, Literal(cell)))
         
         # [tags = property(column):value pairs] IS-A [property(column)]
-        add_isAArc(hypergraph, list(tag_uris), prop_uri, prop)
+        add_isAArc(hypergraph, tag_uris, prop_uri, prop)
 
     # [CSV object class] HAS-A [properties(columns)]
     add_hasAArc(hypergraph, obj_class_uri, obj_class, prop_uris)
@@ -84,7 +86,7 @@ def load_from_csv(csv_path: str, csv_class: str, hypergraph: Graph) -> bool:
         for col in df.columns:
             prop = slug(col)
             val = slug(row[col])
-            tag_uri = DAT[f"{prop}--{val}"]
+            tag_uri = DAT[f"tag/{prop}/{val}"]
             tag_uris.append(tag_uri)
 
         # all hypergraph nodes should have been added by this point
@@ -94,13 +96,15 @@ def load_from_csv(csv_path: str, csv_class: str, hypergraph: Graph) -> bool:
     # [objects(rows)] IS-A [CSV object class]
     add_isAArc(hypergraph, obj_uris, obj_class_uri, obj_class)
 
-    return True
+def test(csv_path: str, csv_class: str) -> None:
+    start = time.perf_counter()
 
-def test(csv_path: str, csv_class: str):
     hypergraph = Graph()
     load_hyper_ontology(hypergraph)
     load_from_csv(csv_path, csv_class, hypergraph)
 
+    '''
+    # shacl validation of BF-hypergraph
     conforms, results_graph, results_text = validate(
         data_graph=hypergraph,
         shacl_graph=hypergraph,
@@ -112,8 +116,12 @@ def test(csv_path: str, csv_class: str):
     print("  Hypergraph Nodes: ", len(list(hypergraph.subjects(RDF.type, TAG.HyperNode))))
     print("  IS-A B-Hyperarcs: ", len(list(hypergraph.subjects(RDF.type, TAG.isAArc))))
     print("  HAS-A F-Hyperarcs: ", len(list(hypergraph.subjects(RDF.type, TAG.hasAArc))))
-    print("\n")
-    print(hypergraph.serialize(format="turtle"))
+    '''
+
+    hypergraph.serialize(destination="hypergraph.ttl", format="turtle")
+
+    duration = (time.perf_counter() - start) / 60
+    print(f"[PERFORMANCE] Graph creation took {duration:.2f} minutes")
 
 if __name__ == "__main__":
-    test("rulings.csv", "Supreme Court Rulings")
+    test("./SCDB/SCDB_2025_01_caseCentered_Citation.csv", "Supreme Court Cases by Citation")
