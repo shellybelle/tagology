@@ -30,6 +30,12 @@ tag:BArc
     rdfs:subClassOf tag:HyperArc ;
     rdfs:label "B-hyperarc" .
 
+tag:label
+    a owl:DatatypeProperty ;
+    rdfs:domain tag:HyperNode ;
+    rdfs:range rdfs:Literal ;
+    rdfs:label "label option" .
+
 tag:hasTail
     a owl:ObjectProperty ;
     rdfs:domain tag:HyperArc ;
