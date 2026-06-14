@@ -1,5 +1,7 @@
-# output files
-backend/hypergraphs
+# triplestores and output files
+*.nt
+backend/scdb_store/
+backend/hyper_store/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

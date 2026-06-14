@@ -1,9 +1,9 @@
 from rdflib import Namespace, URIRef, Literal
 from rdflib.namespace import RDF
-import pandas, re, time, requests, os
+from pyoxigraph import Store, RdfFormat
+from pathlib import Path
+import pandas, re, requests
 
-HYPER_ONTOLOGY_TTL = "./hyper_ontology.ttl"
-OUTPUT_DIR = "./hypergraphs"
 TAG = Namespace("https://theknowledgecommons.org/ns/tagology/")
 DATA = Namespace("https://theknowledgecommons.org/tmp/")
 DCTERM = Namespace("http://purl.org/dc/terms/")
@@ -28,13 +28,6 @@ class Writer:
         self.out.write(f"{s.n3()} {p.n3()} {o.n3()} .\n")
         self.triple_count += 1
 
-'''
-import psutil
-def print_ram():
-    rss = psutil.Process(os.getpid()).memory_info().rss / (1024**3)
-    print(f"[PERFORMANCE] Current RAM usage: {rss:.2f} GB")
-'''
-
 def slug(text: str) -> str:
     s = str(text).strip().lower()
     s = re.sub(r'\s+', '_', s)
@@ -56,11 +49,17 @@ def add_hasAArc(writer: Writer, tail: URIRef, tailLabel: str, heads: list[URIRef
     for head in heads:
         writer.triple(arc, TAG.hasHead, head)
 
-def load_from_csv(csv_url: str, csv_obj: str) -> str:
+def csv_to_nt(csv_url: str, csv_obj: str) -> Path:
+
+    r = requests.head(csv_url, allow_redirects=True)
+    r.raise_for_status()
+    size_mb = int(r.headers.get("Content-Length", 0)) / (1024 * 1024)
+    
+    print(f"[STATUS] Parsing {csv_url} ({size_mb:.2f} MB)...") 
     df = pandas.read_csv(csv_url, dtype=str, compression='infer').fillna("")
 
     obj_class = slug(csv_obj)
-    output_file = f"{OUTPUT_DIR}/hypergraph_{obj_class}.nt"
+    output_file = f"./hypergraph_{obj_class}.nt"
 
     with Writer(output_file) as writer:
         obj_class_uri = DATA[obj_class]
@@ -121,46 +120,16 @@ def load_from_csv(csv_url: str, csv_obj: str) -> str:
 
         print(f"[STATUS] {output_file} created with {writer.triple_count} triples")
 
-def csvs_to_hypergraph(csvs: list[tuple[str, str]]) -> None:
-    for csv_url, csv_obj in csvs:
-        r = requests.head(csv_url, allow_redirects=True)
-        r.raise_for_status()
-        size_mb = int(r.headers.get("Content-Length", 0)) / (1024 * 1024)
-        print(f"[STATUS] Loading {csv_url} ({size_mb:.2f} MB)...")
-        load_from_csv(csv_url, csv_obj)
+    # TODO : only return this on full success
+    return Path(output_file)
 
-def test():
-    start = time.perf_counter()
+def nt_to_hypergraph(output_path: Path, hyper_store: Store) -> None:
+    hyper_store.bulk_load(path=output_path, format=RdfFormat.N_TRIPLES, lenient=True)
+    print(f"[STATUS] Loaded {str(output_path)} into triplestore")
 
-    if os.path.exists(OUTPUT_DIR):
-        for f in os.listdir(OUTPUT_DIR):
-            os.remove(os.path.join(OUTPUT_DIR, f))
-    else:
-        os.makedirs(OUTPUT_DIR)
+def csv_to_hypergraph(hyper_store: Store, csv_url: str, csv_obj: str) -> None:
+    output_path = csv_to_nt(csv_url, csv_obj)
+    nt_to_hypergraph(output_path, hyper_store)
+    output_path.unlink()
+    print(f"[STATUS] {str(output_path)} deleted")
 
-    # TODO: USER ENTERED FILES AND CLASSES
-    csvs = [
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_caseCentered_Citation.csv.zip",
-         "Supreme Court Cases by Citation"),
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_caseCentered_Docket.csv.zip",
-         "Supreme Court Cases by Docket"),
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_caseCentered_LegalProvision.csv.zip",
-         "Supreme Court Cases by Provision"),
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_caseCentered_Vote.csv.zip",
-         "Supreme Court Cases by Provision - Split Votes"),
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_justiceCentered_Citation.csv.zip",
-         "Supreme Court Judges by Citation"),
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_justiceCentered_Docket.csv.zip",
-         "Supreme Court Judges by Docket"),
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_justiceCentered_LegalProvision.csv.zip",
-         "Supreme Court Judges by Provision"),
-        ("http://scdb.wustl.edu/_brickFiles/2025_01/SCDB_2025_01_justiceCentered_Vote.csv.zip",
-         "Supreme Court Judges by Provision - Split Votes")]
-
-    csvs_to_hypergraph(csvs)
-
-    # TODO : SHACL validation
-
-    print(f"[STATUS] {len(csvs)} CSVs translated to semantic hypergraph .nt files")
-    duration = (time.perf_counter() - start) / 60
-    print(f"[PERFORMANCE] Translation took {duration:.2f} minutes")
