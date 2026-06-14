@@ -1,9 +1,0 @@
-case_id,case_name,year,chief_justice,issue,holding,outcome
-1,Marbury v. Madison,1803,John Marshall,Judicial Review,Courts can review constitutionality of laws,Government Power Limited
-2,Dred Scott v. Sandford,1857,Roger Taney,Slavery,African Americans not citizens,Slaveholder Victory
-3,Brown v. Board of Education,1954,Earl Warren,School Segregation,Separate schools are unconstitutional,Civil Rights Victory
-4,Miranda v. Arizona,1966,Earl Warren,Criminal Procedure,Police must inform suspects of rights,Defendant Rights Expanded
-5,Roe v. Wade,1973,Warren Burger,Abortion,Constitution protects abortion access,Privacy Rights Expanded
-6,Bush v. Gore,2000,William Rehnquist,Election Law,Florida recount halted,Election Decided
-7,Obergefell v. Hodges,2015,John Roberts,Marriage Equality,Same-sex marriage protected,Civil Rights Victory
-8,Dobbs v. Jackson Women's Health Organization,2022,John Roberts,Abortion,Roe overturned,State Authority Expanded

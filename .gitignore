@@ -1,6 +1,5 @@
-# test files
-backend/SCDB/
-backend/*.nt
+# output files
+backend/hypergraphs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
