@@ -1,5 +1,5 @@
 from pyoxigraph import Store
-from scipy.sparse import coo_array, save_npz
+from scipy.sparse import coo_array, csr_array, save_npz
 import numpy, time, pickle
 
 # BG-Hypergraph Incidence Matrix
@@ -7,6 +7,20 @@ import numpy, time, pickle
 # Columns: HyperArcs
 # Arc Tail: -1
 # Arc Head: 1
+
+class TagMatrix:
+    node_index: dict[str, int]
+    arc_index: dict[str, int]
+    matrix: csr_array
+
+    def __init__(self, hyper_store: Store):
+        print(f"[STATUS] Building indexes...")
+        self.node_index = build_node_index(hyper_store)
+        print(f"[STATUS] HyperNode index built with {len(self.node_index)} entries")
+        self.arc_index = build_arc_index(hyper_store)
+        print(f"[STATUS] HyperArc index built with {len(self.arc_index)} entries")
+        self.matrix = hypergraph_to_matrix(hyper_store, self.node_index, self.arc_index)
+        print(f"[STATUS] Hypergraph matrix created from triplestore")
 
 def build_node_index(hyper_store: Store) -> dict[str, int]:
     query_str = """
@@ -49,13 +63,7 @@ def get_total_incidences(hyper_store:Store) -> int:
     results = list(hyper_store.query(query_str))
     return int(results[0]['count'].value)
 
-def hypergraph_to_matrix(hyper_store: Store) -> None:
-    print(f"[STATUS] Building indexes...")
-    node_index = build_node_index(hyper_store)
-    print(f"[STATUS] HyperNode index built with {len(node_index)} entries")
-    arc_index = build_arc_index(hyper_store)
-    print(f"[STATUS] HyperArc index built with {len(arc_index)} entries")
-
+def hypergraph_to_matrix(hyper_store: Store, node_index: dict[str, int], arc_index: dict[str, int]) -> csr_array:
     total_incidences = get_total_incidences(hyper_store)
     print(f"[STATUS] Loading {total_incidences} incidences...")
     
@@ -107,24 +115,36 @@ def hypergraph_to_matrix(hyper_store: Store) -> None:
 
     assert k == total_incidences, f"Expected {total_incidences:,} incidences but got {k:,}"
 
-    M = coo_array(
+    hyper_matrix = coo_array(
         (data, (rows, cols)),
         shape=(len(node_index), len(arc_index)),
-        dtype=numpy.int8)
-    print(f"[STATUS] Matrix shape: {M.shape}")
-    print(f"[STATUS] Matrix nnz: {M.nnz:,}")
+        dtype=numpy.int8).tocsr()
+    print(f"[STATUS] Matrix shape: {hyper_matrix.shape}")
+    print(f"[STATUS] Matrix nnz: {hyper_matrix.nnz:,}")
 
-    save_npz("../scdbTesting/scdb_hypermatrix.npz", M)
+    return hyper_matrix
+
+def test() -> None:
+    start = time.perf_counter() 
+    
+    # existing store
+    hyper_store = Store("../scdbTesting/scdb_store")
+
+    print(f"[STATUS] Building indexes...")
+    node_index = build_node_index(hyper_store)
+    print(f"[STATUS] HyperNode index built with {len(node_index)} entries")
+    arc_index = build_arc_index(hyper_store)
+    print(f"[STATUS] HyperArc index built with {len(arc_index)} entries")
+    
+    hyper_matrix = hypergraph_to_matrix(hyper_store, node_index, arc_index)
+    
+    save_npz("../scdbTesting/scdb_hypermatrix.npz", hyper_matrix)
     with open("../scdbTesting/node_index.pkl", "wb") as f:
         pickle.dump(node_index, f)
     with open("../scdbTesting/arc_index.pkl", "wb") as f:
         pickle.dump(arc_index, f)
-    print("[STATUS] Saved scdb_hypermatrix.npz, node_index.pkl, arc_index.pkl")
+    print("[STATUS] Saved scdb_hypermatrix.npz, node_index, arc_index to ../scdbTesting")
 
-def test() -> None:
-    start = time.perf_counter() 
-    hyper_store = Store("../scdbTesting/scdb_store")
-    hypergraph_to_matrix(hyper_store)
     duration = (time.perf_counter() - start) / 60
     print(f"[PERFORMANCE] Total Duration: {duration:.2f} minutes")
 

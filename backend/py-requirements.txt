@@ -8,11 +8,13 @@ packaging==26.2
 pandas==3.0.3
 prettytable==3.17.0
 psutil==7.2.2
+pyoxigraph==0.5.8
 pyparsing==3.3.2
 pyshacl==0.31.0
 python-dateutil==2.9.0.post0
 rdflib==7.6.0
 requests==2.34.2
+scipy==1.17.1
 six==1.17.0
 urllib3==2.7.0
 wcwidth==0.8.0
