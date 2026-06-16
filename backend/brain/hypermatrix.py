@@ -1,4 +1,4 @@
-from pyoxigraph import Store, NamedNode
+from pyoxigraph import Store
 from scipy.sparse import coo_array, save_npz
 import numpy, time, pickle
 
@@ -8,7 +8,7 @@ import numpy, time, pickle
 # Arc Tail: -1
 # Arc Head: 1
 
-def build_node_index(hyper_store: Store) -> dict[NamedNode, int]:
+def build_node_index(hyper_store: Store) -> dict[str, int]:
     query_str = """
         PREFIX tag: <https://theknowledgecommons.org/ns/tagology/>
         SELECT ?node
@@ -18,12 +18,11 @@ def build_node_index(hyper_store: Store) -> dict[NamedNode, int]:
 
     index = {}
     for r in hyper_store.query(query_str):
-        uri = r['node'].value
+        uri = str(r['node'].value)
         index[uri] = len(index)
-    print(f"[STATUS] HyperNode index built with {len(index)} entries")
     return index
 
-def build_arc_index(hyper_store: Store) -> dict[NamedNode, int]:
+def build_arc_index(hyper_store: Store) -> dict[str, int]:
     query_str = """
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX tag: <https://theknowledgecommons.org/ns/tagology/>
@@ -34,9 +33,8 @@ def build_arc_index(hyper_store: Store) -> dict[NamedNode, int]:
 
     index = {}
     for r in hyper_store.query(query_str):
-        uri = r['arc'].value
+        uri = str(r['arc'].value)
         index[uri] = len(index)
-    print(f"[STATUS] HyperArc index built with {len(index)} entries")
     return index
 
 def get_total_incidences(hyper_store:Store) -> int:
@@ -52,11 +50,14 @@ def get_total_incidences(hyper_store:Store) -> int:
     return int(results[0]['count'].value)
 
 def hypergraph_to_matrix(hyper_store: Store) -> None:
+    print(f"[STATUS] Building indexes...")
     node_index = build_node_index(hyper_store)
+    print(f"[STATUS] HyperNode index built with {len(node_index)} entries")
     arc_index = build_arc_index(hyper_store)
+    print(f"[STATUS] HyperArc index built with {len(arc_index)} entries")
 
     total_incidences = get_total_incidences(hyper_store)
-    print(f"Loading {total_incidences} incidences...")
+    print(f"[STATUS] Loading {total_incidences} incidences...")
     
     rows = numpy.empty(total_incidences, dtype=numpy.int32)
     cols = numpy.empty(total_incidences, dtype=numpy.int32)
@@ -81,8 +82,8 @@ def hypergraph_to_matrix(hyper_store: Store) -> None:
 
     k = 0
     for r in tails_results:
-        arc = r['arc'].value
-        node = r['node'].value
+        arc = str(r['arc'].value)
+        node = str(r['node'].value)
 
         rows[k] = node_index[node]
         cols[k] = arc_index[arc]
@@ -93,8 +94,8 @@ def hypergraph_to_matrix(hyper_store: Store) -> None:
             print(f"[STATUS] Loaded {k:,} incidences")
 
     for r in heads_results:
-        arc = r['arc'].value
-        node = r['node'].value
+        arc = str(r['arc'].value)
+        node = str(r['node'].value)
 
         rows[k] = node_index[node]
         cols[k] = arc_index[arc]
@@ -113,10 +114,10 @@ def hypergraph_to_matrix(hyper_store: Store) -> None:
     print(f"[STATUS] Matrix shape: {M.shape}")
     print(f"[STATUS] Matrix nnz: {M.nnz:,}")
 
-    save_npz("scdb_hypermatrix.npz", M)
-    with open("node_index.pkl", "wb") as f:
+    save_npz("../scdbTesting/scdb_hypermatrix.npz", M)
+    with open("../scdbTesting/node_index.pkl", "wb") as f:
         pickle.dump(node_index, f)
-    with open("arc_index.pkl", "wb") as f:
+    with open("../scdbTesting/arc_index.pkl", "wb") as f:
         pickle.dump(arc_index, f)
     print("[STATUS] Saved scdb_hypermatrix.npz, node_index.pkl, arc_index.pkl")
 
