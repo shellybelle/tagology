@@ -1,7 +1,7 @@
 # triplestores and output files
 *.nt
-backend/scdb_store/
 backend/hyper_store/
+backend/scdbTesting/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

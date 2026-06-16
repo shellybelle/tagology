@@ -1,4 +1,5 @@
 from brain.hypergraph import csv_to_hypergraph
+from brain.hypermatrix import hypergraph_to_matrix
 from pyoxigraph import Store, RdfFormat
 from pathlib import Path
 import time, shutil
