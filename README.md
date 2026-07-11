@@ -1,23 +1,22 @@
-````markdown
-# Tagology
+# tagology
 
-*A semantic publishing engine built on a BF-hypergraph ontology.*
+*A Semantic Web publishing and knowledge engineering workbench built around a BF-hypergraph ontology.*
 
 > **Current Status**
 >
-> This repository contains the current implementation of Tagology's core engine. It focuses on semantic modeling, ontology design, RDF generation, and sparse hypergraph construction. The broader publishing workbench is under active development.
+> This repository contains the current implementation of tagology's core engine. It focuses on semantic modeling, ontology design, RDF generation, and sparse hypergraph construction. The broader semantic publishing workbench is under active development.
 
 ---
 
 ## Overview
 
-Tagology explores a simple idea:
+tagology explores a simple idea:
 
 > **Every property-value pair is a tag.**
 
-Rather than treating tags as metadata attached to objects, Tagology treats them as first-class semantic structures. Objects become collections of tags, and those tags become the foundation for organizing, navigating, and ultimately publishing knowledge.
+Rather than treating tags as metadata attached to objects, tagology treats them as first-class semantic structures. Objects become collections of tags, and those tags become the foundation for organizing, navigating, and ultimately publishing knowledge.
 
-The current engine combines Semantic Web technologies with BF-hypergraphs and sparse matrix representations to build a semantic model that is both machine-readable and computationally efficient.
+The current engine combines Semantic Web technologies with a BF-hypergraph ontology and sparse matrix representations to build a semantic model that is both machine-readable and computationally efficient.
 
 ---
 
@@ -25,27 +24,28 @@ The current engine combines Semantic Web technologies with BF-hypergraphs and sp
 
 - Transform structured datasets into semantic hypergraphs
 - Model knowledge using a custom BF-hypergraph ontology
-- Generate RDF/Turtle from structured data
+- Generate RDF from structured data
 - Load and query graphs through an embedded RDF triplestore
 - Build sparse hypergraph incidence matrices
 - Generate reusable node and hyperarc indexes
-- Validate the complete pipeline using a large U.S. Supreme Court dataset 
+- Validate the ingestion pipeline using a large U.S. Supreme Court dataset
+
 ---
 
 ## BF-Hypergraph Ontology
 
-Tagology models knowledge using a **Backward-Forward (BF) Hypergraph**.
+tagology models knowledge using a **Backward-Forward (BF) Hypergraph**.
 
-Rather than representing relationships as simple binary edges, the ontology defines two complementary semantic hyperarc types.
+Rather than representing relationships as simple binary edges, the ontology defines two complementary classes of directed hyperarcs.
 
 ### HAS-A Hyperarcs (Forward)
 
-A **HAS-A** hyperarc is a forward hyperarc consisting of:
+A **HAS-A** hyperarc consists of:
 
 - one **tail**
 - one or more **heads**
 
-It represents an object and every tag describing that object.
+It represents an object and the tags that describe it.
 
 ```text
           Supreme Court Case
@@ -56,36 +56,45 @@ It represents an object and every tag describing that object.
 
 Semantic interpretation:
 
-> **An object has many tags.**
+> **An object HAS many tags.**
 
 ### IS-A Hyperarcs (Backward)
 
-An **IS-A** hyperarc is a backward hyperarc consisting of:
+An **IS-A** hyperarc consists of:
 
 - one or more **tails**
 - one **head**
 
-It represents every object sharing a semantic tag.
+It represents semantic classification by grouping related nodes under a common concept.
 
 ```text
-{Brown, Roe, Gideon}
-          │
-          ▼
- Constitutional Law
+{1954, 1955, 1956, ...}
+            │
+            ▼
+      Decision Year
+```
+
+or
+
+```text
+{Brown, Roe, Gideon, ...}
+            │
+            ▼
+    Supreme Court Case
 ```
 
 Semantic interpretation:
 
-> **Many objects share one semantic concept.**
+> **Many related nodes IS-A a shared semantic concept.**
 
 Together these complementary hyperarcs form a BF-hypergraph.
 
 Every property-value tag participates in both directions:
 
-- **HAS-A** hyperarcs describe an object.
-- **IS-A** hyperarcs organize objects through shared semantic meaning.
+- **HAS-A** hyperarcs describe an object through its tags.
+- **IS-A** hyperarcs organize tags and objects into shared semantic concepts.
 
-The ontology represents these relationships explicitly using RDF, while the same structure maps directly onto a signed sparse incidence matrix for efficient analysis.
+The ontology represents these relationships explicitly in RDF while simultaneously mapping them onto a signed sparse incidence matrix for efficient computation.
 
 ---
 
@@ -101,7 +110,7 @@ Property-Value Tags
 BF-Hypergraph Ontology
         │
         ▼
-RDF / Turtle
+RDF
         │
         ▼
 Embedded Triplestore
@@ -110,7 +119,7 @@ Embedded Triplestore
 Sparse Incidence Matrix
         │
         ▼
-Semantic Analysis
+Foundation for Semantic Analysis
 ```
 
 ---
@@ -129,19 +138,19 @@ Semantic Analysis
 
 ## Looking Ahead
 
-The current repository implements Tagology's semantic modeling engine.
+The current repository implements tagology's semantic modeling engine.
 
-The broader Tagology project is intended to become a semantic publishing workbench for Linked Data.
+The broader tagology project is intended to become a semantic publishing workbench for Linked Data.
 
-Rather than requiring users to author RDF directly, Tagology will use its BF-hypergraph representation and incidence matrix as an interactive semantic workspace where users can:
+Rather than requiring users to author RDF directly, tagology will use its BF-hypergraph representation and incidence matrix as an interactive semantic workspace where users can:
 
-- import structured datasets
-- discover duplicate concepts
-- refine and normalize property-value tags
-- choose canonical labels
-- establish Linked Data connections
-- curate ontologies
-- publish interoperable RDF datasets
+- Import structured datasets
+- Discover duplicate concepts
+- Normalize property-value tags
+- Choose canonical labels
+- Establish Linked Data connections
+- Curate ontologies
+- Publish interoperable RDF datasets
 
 In this model, the incidence matrix is more than a computational representation—it becomes the analytical engine that helps users improve the semantic quality of their data before publication.
 
@@ -151,9 +160,8 @@ In this model, the incidence matrix is more than a computational representation�
 
 Most Semantic Web tools assume users already know how to model and publish RDF.
 
-Tagology begins one step earlier.
+tagology begins one step earlier.
 
-It explores how semantic knowledge can be organized around property-value tags, analyzed as a BF-hypergraph, and refined through computational assistance before being published as interoperable Linked Data.
+It explores how semantic knowledge can be organized around property-value tags, analyzed through a BF-hypergraph, refined through computational assistance, and ultimately published as interoperable Linked Data.
 
 The long-term goal is not simply to build another graph database, but to lower the barrier to creating high-quality semantic knowledge.
-````
