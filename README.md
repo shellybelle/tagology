@@ -14,15 +14,15 @@ tagology explores a simple idea:
 
 > **Every property-value pair is a tag.**
 
-Rather than treating tags as metadata attached to objects, tagology treats them as first-class semantic structures. Objects become collections of tags, and those tags become the foundation for organizing, navigating, and ultimately publishing knowledge.
+Rather than treating tags as metadata attached to objects, tagology treats them as first-class semantic structures. Objects become collections of tags, and those tags become the foundation for organizing, navigating, and publishing knowledge.
 
-The current engine combines Semantic Web technologies with a BF-hypergraph ontology and sparse matrix representations to build a semantic model that is both machine-readable and computationally efficient.
+Structured datasets are transformed into RDF and a corresponding BF-hypergraph, allowing the same semantic model to support both Linked Data publication and computational analysis.
 
 ---
 
 ## Current Capabilities
 
-- Transform structured datasets into semantic hypergraphs
+- Transform structured datasets into RDF and semantic hypergraphs
 - Model knowledge using a custom BF-hypergraph ontology
 - Generate RDF from structured data
 - Load and query graphs through an embedded RDF triplestore
@@ -65,7 +65,7 @@ An **IS-A** hyperarc consists of:
 - one or more **tails**
 - one **head**
 
-It represents semantic classification by grouping related nodes under a common concept.
+It represents semantic classification by grouping related nodes under a shared concept.
 
 ```text
 {1954, 1955, 1956, ...}
@@ -94,7 +94,7 @@ Every property-value tag participates in both directions:
 - **HAS-A** hyperarcs describe an object through its tags.
 - **IS-A** hyperarcs organize tags and objects into shared semantic concepts.
 
-The ontology represents these relationships explicitly in RDF while simultaneously mapping them onto a signed sparse incidence matrix for efficient computation.
+These relationships are represented explicitly in RDF while simultaneously mapped onto a signed sparse incidence matrix for efficient computation.
 
 ---
 
@@ -129,7 +129,7 @@ Foundation for Semantic Analysis
 - Python
 - RDF / Turtle
 - SPARQL
-- rdflib
+- RDFLib
 - PyOxigraph
 - SciPy
 - Pandas
@@ -140,7 +140,7 @@ Foundation for Semantic Analysis
 
 The current repository implements tagology's semantic modeling engine.
 
-The broader tagology project is intended to become a semantic publishing workbench for Linked Data.
+The broader tagology project is intended to become a semantic publishing and knowledge engineering workbench for Linked Data.
 
 Rather than requiring users to author RDF directly, tagology will use its BF-hypergraph representation and incidence matrix as an interactive semantic workspace where users can:
 
@@ -162,6 +162,6 @@ Most Semantic Web tools assume users already know how to model and publish RDF.
 
 tagology begins one step earlier.
 
-It explores how semantic knowledge can be organized around property-value tags, analyzed through a BF-hypergraph, refined through computational assistance, and ultimately published as interoperable Linked Data.
+It explores how structured data can be transformed into semantic knowledge through property-value tags, organized using a BF-hypergraph ontology, analyzed computationally, and ultimately published as interoperable Linked Data.
 
-The long-term goal is not simply to build another graph database, but to lower the barrier to creating high-quality semantic knowledge.
+Rather than replacing existing Semantic Web standards, tagology is intended to complement them by providing a practical semantic modeling workflow before publication.
